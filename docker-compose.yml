@@ -1,0 +1,27 @@
+version: "3"
+networks:
+  net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.3.0/24
+
+services:
+  node:
+    container_name: node
+    restart: always
+    build:
+      context: "./context"
+      dockerfile: Dockerfile
+      args:
+        # если у вас линукс укажите здесь UID своего пользователя
+        # можно узнать командой id -u  и  id -g
+        UID: 1000
+        GID: 1000
+    working_dir: /home/node/app
+    volumes:
+      - ./:/home/node/app
+    networks:
+      net:
+        ipv4_address: 172.22.3.2
+    command: "/bin/bash -c 'trap : TERM INT; sleep infinity & wait'"
