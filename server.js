@@ -18,24 +18,23 @@ io.on('connection', function (socket) {
     };
     players[socket.id] = player;
 
-    socket.on('playerMoved', function (data) {
-        player.x = data.x;
-        player.y = data.y;
-
-        socket.broadcast.emit('playerMoved', {
-            id: socket.id,
-            x: player.x,
-            y: player.y
-        });
-    });
+    socket.on('playerMovement', function (movementData) {
+	  players[socket.id].x = movementData.x;
+	  players[socket.id].y = movementData.y;
+	  // отправляем общее сообщение всем игрокам о перемещении игрока
+	  socket.broadcast.emit('playerMoved', players[socket.id]);
+	});
 
     socket.on('disconnect', function () {
         console.log('A user disconnected: ' + socket.id);
         delete players[socket.id];
-        socket.broadcast.emit('playerDisconnected', socket.id);
+        // отправляем сообщение всем игрокам, чтобы удалить этого игрока
+        socket.broadcast.emit('playerDisconnect', socket.id);
     });
 
+    // отправляем объект players новому игроку
     socket.emit('currentPlayers', players);
+    // обновляем всем другим игрокам информацию о новом игроке
     socket.broadcast.emit('newPlayer', player);
 });
 
