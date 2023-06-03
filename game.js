@@ -14,12 +14,11 @@ class Example extends Phaser.Scene
         this.physics.add.collider(player, this.platforms);
         player.id = playerInfo.id;
         this.otherPlayers.add(player);
-    }SS
+    }
 
     playerMoved(data) {
     	console.log(this.otherPlayers[data.id]);
         if (this.otherPlayers[data.id]) {
-            console.log("Moved");
             this.otherPlayers[data.id].setPosition(data.x, data.y);
         }
     }
@@ -46,7 +45,7 @@ class Example extends Phaser.Scene
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
         this.player = this.physics.add.sprite(100, 450, 'dude');
-	this.otherPlayers = this.add.group();
+	    this.otherPlayers = this.add.group();
         this.socket = io();
         const self = this;
 	
@@ -76,10 +75,13 @@ class Example extends Phaser.Scene
 	    });
 	  });
         
-        this.socket.on('playerMoved', function (playerInfo) {
+        this.socket.on('playerMoved', function (data) {
 	  self.otherPlayers.getChildren().forEach(function (otherPlayer) {
-	    if (playerInfo.id === otherPlayer.id) {
-	      otherPlayer.setPosition(playerInfo.x, playerInfo.y);
+	    if (data.player.id === otherPlayer.id) {
+          if (data.anim === 'turn')
+            otherPlayer.anims.play(data.anim)
+          else otherPlayer.anims.play(data.anim, true)
+	      otherPlayer.setPosition(data.player.x, data.player.y);
 	    }
 	  });
 	});
@@ -132,23 +134,23 @@ class Example extends Phaser.Scene
     update ()
     {
         const { left, right, up } = this.cursors;
-
+        var anim = '';
         if (left.isDown)
         {
             this.player.setVelocityX(-160);
-
+            anim = 'left'
             this.player.anims.play('left', true);
         }
         else if (right.isDown)
         {
             this.player.setVelocityX(160);
-
+            anim = 'right'
             this.player.anims.play('right', true);
         }
         else
         {
             this.player.setVelocityX(0);
-
+            anim = 'turn'
             this.player.anims.play('turn');
         }
 
@@ -157,7 +159,7 @@ class Example extends Phaser.Scene
             this.player.setVelocityY(-330);
         }
         
-        this.socket.emit('playerMovement', { x: this.player.x, y: this.player.y});
+        this.socket.emit('playerMovement', { x: this.player.x, y: this.player.y, anim: anim });
     }
 
     createAnims ()

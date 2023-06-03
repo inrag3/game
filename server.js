@@ -18,11 +18,11 @@ io.on('connection', function (socket) {
     };
     players[socket.id] = player;
 
-    socket.on('playerMovement', function (movementData) {
-	  players[socket.id].x = movementData.x;
-	  players[socket.id].y = movementData.y;
+    socket.on('playerMovement', function (data) {
+	  players[socket.id].x = data.x;
+	  players[socket.id].y = data.y;
 	  // отправляем общее сообщение всем игрокам о перемещении игрока
-	  socket.broadcast.emit('playerMoved', players[socket.id]);
+	  socket.broadcast.emit('playerMoved', { player: players[socket.id], anim: data.anim });
 	});
 
     socket.on('disconnect', function () {
