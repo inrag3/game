@@ -57,12 +57,13 @@ io.on('connection', function (socket) {
         
         if (socket.id === bombsOwner) {
             bombsOwner = null;
-            
-            const connected = Object.keys(io.sockets.sockets);
-            const newOwner = connected[connected.length - 1];
+            if (socket.id === bombsOwner) {
+            bombsOwner = null;
+            const newOwner = players[Object.keys(players)[0]];
             if (newOwner) {
-              bombsOwner = newOwner;
+              bombsOwner = newOwner.id;
             }
+        }
         }
         console.log(bombsOwner);
     });
