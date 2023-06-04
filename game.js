@@ -45,13 +45,15 @@ class Example extends Phaser.Scene
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
         this.player = this.physics.add.sprite(100, 450, 'dude');
-	    this.otherPlayers = this.add.group();
+        this.explosion = this.add.sprite(0, 0, 'boom').setVisible(false);
+	this.otherPlayers = this.add.group();
+	this.bombs = this.physics.add.group();
         this.socket = io();
         const self = this;
 	
 	this.socket.on("currentPlayers", function(players) {
 	      Object.keys(players).forEach(function(id) {
-	        
+	      
 	        console.log(self.socket.id);
 		if (players[id].id === self.socket.id) {
 		  self.addPlayer(players[id]);
@@ -86,25 +88,39 @@ class Example extends Phaser.Scene
 	  });
 	});
         
-        this.explosion = this.add.sprite(0, 0, 'boom').setVisible(false);
-        this.bombs = this.physics.add.group({
-            key: 'bomb',
-            quantity: 10,
-            setXY: { x: 10, y: 10, stepX: 80, stepY: 40 },
-            bounceX: 0.8,
-            bounceY: 0.8,
-            collideWorldBounds: true,
-            velocityX: 50
-        });    
+        this.socket.on('currentBombs', function(bombs) {
+	  // Создание спрайтов для каждой бомбы и добавление их в группу
+	    Object.values(bombs).forEach(function(bomb) {
+	    var sprite = self.physics.add.sprite(bomb.x, bomb.y, 'bomb');
+	    self.bombs.add(sprite);
+	    sprite.id = bomb.id;
+	    sprite.setBounce(0.8);
+	    sprite.setCollideWorldBounds(true);
+	    sprite.setVelocityX(50);
+	  }); 
+	  self.physics.add.collider(self.bombs, self.platforms);
+	});
 
-        this.physics.add.collider(this.bombs, this.platforms);
+       
+        this.socket.on('destroyBomb', function(id) {
+          self.bombs.getChildren().forEach(function (bomb) {
+          	if (bomb.id === id)
+          	{
+          	    console.log('Клиент уничтожение бомбы: ' + bomb);
+	  	    self.explosion.copyPosition(bomb).play('explode');
+                    bomb.destroy();
+          	}
+          });
+          
+	});
+       
+        
         this.bombsCollider = this.physics.add.overlap(this.player, this.bombs, (player, bomb) =>
         {
             this.explosion.copyPosition(bomb).play('explode');
             bomb.destroy();
+            this.socket.emit('destroyBomb', bomb.id);
         });
-
-
 
 
         /*

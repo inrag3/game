@@ -7,9 +7,22 @@ server.listen(80)
 console.log('Server has started')
 
 var players = {};
+var bombs = {};
+var bombsOwner = null; // Идентификатор сокета клиента, владеющего бомбами
+
 
 io.on('connection', function (socket) {
     console.log('A user connected: ' + socket.id);
+    if (!bombsOwner) {
+    	bombsOwner = socket.id;
+    	for (var i = 0; i < 10; i++) {
+	  var x = 10 + i * 80;
+	  var y = 10 + i * 40;
+	  bombs[i] = { x: x, y: y, id: i};
+	}
+    }
+    
+    socket.emit('currentBombs', bombs);
 
     var player = {
         id: socket.id,
@@ -24,6 +37,16 @@ io.on('connection', function (socket) {
 	  // отправляем общее сообщение всем игрокам о перемещении игрока
 	  socket.broadcast.emit('playerMoved', { player: players[socket.id], anim: data.anim });
 	});
+    
+    /*socket.on('bombsMovement', function (data) {
+	  
+	});*/
+
+    socket.on('destroyBomb', function (id) {
+        console.log('Bomb destroy: ' + id);
+  	delete bombs[id]
+        socket.broadcast.emit('destroyBomb', id);
+    });
 
     socket.on('disconnect', function () {
         console.log('A user disconnected: ' + socket.id);
@@ -33,6 +56,7 @@ io.on('connection', function (socket) {
     });
 
     // отправляем объект players новому игроку
+
     socket.emit('currentPlayers', players);
     // обновляем всем другим игрокам информацию о новом игроке
     socket.broadcast.emit('newPlayer', player);
