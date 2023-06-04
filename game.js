@@ -48,6 +48,7 @@ class Example extends Phaser.Scene
         this.explosion = this.add.sprite(0, 0, 'boom').setVisible(false);
 	this.otherPlayers = this.add.group();
 	this.bombs = this.physics.add.group();
+	this.boxes = this.add.group();
         this.socket = io();
         const self = this;
 	
@@ -90,6 +91,7 @@ class Example extends Phaser.Scene
         
         this.socket.on('currentBombs', function(bombs) {
 	  // Создание спрайтов для каждой бомбы и добавление их в группу
+	   
 	    Object.values(bombs).forEach(function(bomb) {
 	    var sprite = self.physics.add.sprite(bomb.x, bomb.y, 'bomb');
 	    sprite.id = bomb.id;
@@ -101,6 +103,15 @@ class Example extends Phaser.Scene
 	  self.physics.add.collider(self.bombs, self.platforms);
 	});
 
+       this.socket.on('currentBoxes', function(boxes) {
+	    Object.values(boxes).forEach(function(box) {
+	    	var sprite = self.physics.add.staticSprite(box.x, box.y, 'box');
+	    	sprite.id = box.id;
+	    	self.boxes.add(sprite);
+	    });
+	});
+       
+       
        
         this.socket.on('bombsMovement', function(bombsData) {
           console.log(bombsData);
@@ -108,7 +119,6 @@ class Example extends Phaser.Scene
 	  bombsData.forEach(function(bombData) {
 	    self.bombs.getChildren().forEach(function(bomb) {
 	      if (bomb.id === bombData.id) {
-	        console.log('Sync');
 		bomb.setPosition(bombData.x, bombData.y);
 		bomb.setVelocityX(bombData.velocityX);
 	      }
@@ -129,8 +139,24 @@ class Example extends Phaser.Scene
           });
           
 	});
-       
-        
+	
+	this.socket.on('destroyBox', function(data) {
+          self.boxes.getChildren().forEach(function (box) {
+          	if (box.id === data.id)
+          	{
+          	    const player = self.otherPlayers.getChildren()[0]
+          	    player.setTintFill(0xffff00);
+		    box.destroy();
+		    self.time.delayedCall(5000, () =>
+		    {
+		        player.clearTint();
+		    });
+          	}
+          });
+          
+	});
+	
+
         this.bombsCollider = this.physics.add.overlap(this.player, this.bombs, (player, bomb) =>
         {
             this.explosion.copyPosition(bomb).play('explode');
@@ -138,23 +164,22 @@ class Example extends Phaser.Scene
             this.socket.emit('destroyBomb', bomb.id);
         });
 
-
-        /*
-        const box = this.physics.add.staticImage(400, 450, 'box');
-        this.physics.add.overlap(this.player, box, (player, _box) =>
+	this.physics.add.overlap(this.player, this.boxes, (player, box) =>
         {
+            this.socket.emit('destroyBox', {id: box.id, player: player} );
             this.bombsCollider.active = false;
             player.setTintFill(0xffff00);
-            _box.destroy();
-            this.time.delayedCall(10000, () =>
+
+            box.destroy();
+            this.time.delayedCall(5000, () =>
             {
                 this.bombsCollider.active = true;
                 player.clearTint();
             });
         });
-        */
+
         
-        
+	
         this.cursors = this.input.keyboard.createCursorKeys();
     }
 
