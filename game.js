@@ -92,8 +92,8 @@ class Example extends Phaser.Scene
 	  // Создание спрайтов для каждой бомбы и добавление их в группу
 	    Object.values(bombs).forEach(function(bomb) {
 	    var sprite = self.physics.add.sprite(bomb.x, bomb.y, 'bomb');
-	    self.bombs.add(sprite);
 	    sprite.id = bomb.id;
+	    self.bombs.add(sprite);
 	    sprite.setBounce(0.8);
 	    sprite.setCollideWorldBounds(true);
 	    sprite.setVelocityX(50);
@@ -101,6 +101,22 @@ class Example extends Phaser.Scene
 	  self.physics.add.collider(self.bombs, self.platforms);
 	});
 
+       
+        this.socket.on('bombsMovement', function(bombsData) {
+          console.log(bombsData);
+          console.log(self.bombs.getChildren());
+	  bombsData.forEach(function(bombData) {
+	    self.bombs.getChildren().forEach(function(bomb) {
+	      if (bomb.id === bombData.id) {
+	        console.log('Sync');
+		bomb.setPosition(bombData.x, bombData.y);
+		bomb.setVelocityX(bombData.velocityX);
+	      }
+	    });
+	  });
+	});
+       
+       
        
         this.socket.on('destroyBomb', function(id) {
           self.bombs.getChildren().forEach(function (bomb) {
@@ -171,7 +187,23 @@ class Example extends Phaser.Scene
         }
         
         this.socket.emit('playerMovement', { x: this.player.x, y: this.player.y, anim: anim });
+        const bombsData = this.serializeBombsData(this.bombs.getChildren());
+        this.socket.emit('bombsMovement', bombsData);
     }
+
+   serializeBombsData(bombs) {
+	  const bombsData = [];
+	  bombs.forEach(bomb => {
+	    const bombData = {
+	      x: bomb.x,
+	      y: bomb.y,
+	      id: bomb.id,
+	      velocityX: bomb.body.velocity.x
+	    };
+	    bombsData.push(bombData);
+	  });
+	  return bombsData;
+	}
 
     createAnims ()
     {

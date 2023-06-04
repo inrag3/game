@@ -38,9 +38,10 @@ io.on('connection', function (socket) {
 	  socket.broadcast.emit('playerMoved', { player: players[socket.id], anim: data.anim });
 	});
     
-    /*socket.on('bombsMovement', function (data) {
-	  
-	});*/
+    socket.on('bombsMovement', function (bombs) {
+    	if (bombsOwner === socket.id) {
+	  socket.broadcast.emit('bombsMovement', bombs);
+	}});
 
     socket.on('destroyBomb', function (id) {
         console.log('Bomb destroy: ' + id);
