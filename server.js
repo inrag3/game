@@ -54,6 +54,17 @@ io.on('connection', function (socket) {
         delete players[socket.id];
         // отправляем сообщение всем игрокам, чтобы удалить этого игрока
         socket.broadcast.emit('playerDisconnect', socket.id);
+        
+        if (socket.id === bombsOwner) {
+            bombsOwner = null;
+            
+            const connected = Object.keys(io.sockets.sockets);
+            const newOwner = connected[connected.length - 1];
+            if (newOwner) {
+              bombsOwner = newOwner;
+            }
+        }
+        console.log(bombsOwner);
     });
 
     // отправляем объект players новому игроку
