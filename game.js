@@ -41,7 +41,7 @@ class Example extends Phaser.Scene
     {
         this.createAnims();
         this.add.image(400, 300, 'sky');
-        const box = this.physics.add.staticImage(400, 450, 'box');
+        
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
         this.player = this.physics.add.sprite(100, 450, 'dude');
@@ -87,12 +87,7 @@ class Example extends Phaser.Scene
 	});
         
         this.explosion = this.add.sprite(0, 0, 'boom').setVisible(false);
-
-
-
-	
-
-        /*this.bombs = this.physics.add.group({
+        this.bombs = this.physics.add.group({
             key: 'bomb',
             quantity: 10,
             setXY: { x: 10, y: 10, stepX: 80, stepY: 40 },
@@ -100,31 +95,31 @@ class Example extends Phaser.Scene
             bounceY: 0.8,
             collideWorldBounds: true,
             velocityX: 50
-        });
-
+        });    
 
         this.physics.add.collider(this.bombs, this.platforms);
-        */
-
-        /*const bombsCollider = this.physics.add.overlap(this.player, this.bombs, (player, bomb) =>
+        this.bombsCollider = this.physics.add.overlap(this.player, this.bombs, (player, bomb) =>
         {
             this.explosion.copyPosition(bomb).play('explode');
             bomb.destroy();
         });
 
-	
+
+
+
+        /*
+        const box = this.physics.add.staticImage(400, 450, 'box');
         this.physics.add.overlap(this.player, box, (player, _box) =>
         {
-            bombsCollider.active = false;
+            this.bombsCollider.active = false;
             player.setTintFill(0xffff00);
             _box.destroy();
-            this.time.delayedCall(5000, () =>
+            this.time.delayedCall(10000, () =>
             {
-                bombsCollider.active = true;
+                this.bombsCollider.active = true;
                 player.clearTint();
             });
         });
-        
         */
         
         
